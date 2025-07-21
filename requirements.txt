@@ -1,0 +1,11 @@
+pandas
+numpy
+matplotlib
+fastapi
+uvicorn
+requests
+pydantic_settings
+google-auth
+rasterio
+opencv-python
+shapely
