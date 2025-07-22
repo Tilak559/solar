@@ -20,6 +20,7 @@ This project provides a RESTful API service that analyzes solar potential for an
 
 - Python 3.8+
 - Google Cloud Platform account
+- Geocoding API
 - Google Solar API enabled
 - Service account with appropriate permissions
 
