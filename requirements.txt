@@ -9,3 +9,4 @@ google-auth
 rasterio
 opencv-python
 shapely
+rasterio

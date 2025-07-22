@@ -27,18 +27,8 @@ def get_access_token():
     except Exception as e:
         return None
 
-def estimate_gutter_length(solar_data, auth_headers=None, max_area_m2=500):
-    """
-    Estimate gutter length from Solar API dataLayers response with improved filtering.
-    
-    Args:
-        solar_data (dict): Response from dataLayers:get API
-        auth_headers (dict): Authentication headers for downloading files
-        max_area_m2 (float): Maximum area in square meters to consider (filters out large buildings)
-        
-    Returns:
-        dict: Contains estimated gutter length and analysis details
-    """
+def estimate_gutter_length(solar_data, auth_headers=None, max_area_m2=None):
+
     try:
         # Get the mask URL from the response
         mask_url = solar_data.get("maskUrl")
@@ -94,7 +84,7 @@ def estimate_gutter_length(solar_data, auth_headers=None, max_area_m2=500):
                 area_meters_sq = area_pixels * (resolution_meters_per_pixel ** 2)
                 
                 # Skip very small contours (likely noise) and very large ones (likely wrong building)
-                if area_meters_sq < 10 or area_meters_sq > max_area_m2:
+                if area_meters_sq < 10:
                     print(f"Skipping contour {i}: area {area_meters_sq:.2f} m² (outside range 10-{max_area_m2} m²)")
                     continue
                 
@@ -128,7 +118,7 @@ def estimate_gutter_length(solar_data, auth_headers=None, max_area_m2=500):
                     "num_contours_analyzed": len(contour_details),
                     "mask_shape": mask.shape,
                     "mask_dtype": str(mask.dtype),
-                    "max_area_filter_m2": max_area_m2
+                    # "max_area_filter_m2": max_area_m2
                 },
                 "contour_details": contour_details
             }
@@ -178,29 +168,6 @@ def estimator(address):
         "x-goog-user-project": config.project_id
     }
 
-    # Try buildingInsights first (more precise for single buildings)
-    if place_id:
-        print(f"Trying buildingInsights with place_id: {place_id}")
-        building_url = f"https://solar.googleapis.com/v1/buildingInsights/{place_id}"
-        
-        building_response = requests.get(building_url, headers=headers)
-        
-        if building_response.status_code == 200:
-            building_data = building_response.json()
-            print(f"Building insights found: {json.dumps(building_data, indent=2)}")
-            
-            # Extract measurements from building insights
-            building_measurements = extract_building_measurements(building_data)
-            
-            return {
-                "solar_data": building_data,
-                "gutter_estimate": building_measurements,
-                "method": "buildingInsights"
-            }
-        else:
-            print(f"Building insights failed ({building_response.status_code}), falling back to dataLayers")
-    
-    # Fallback to dataLayers method with better filtering
     print("Using dataLayers method with improved filtering")
     url = (
         "https://solar.googleapis.com/v1/dataLayers:get"
@@ -219,7 +186,7 @@ def estimator(address):
     print(f"Solar API response: {json.dumps(data, indent=2)}")
     
     # Estimate gutter length from the solar data with authentication headers and better filtering
-    gutter_estimate = estimate_gutter_length(data, auth_headers=headers, max_area_m2=500)
+    gutter_estimate = estimate_gutter_length(data, auth_headers=headers, max_area_m2=None)
     
     return {
         "solar_data": data,
@@ -227,46 +194,3 @@ def estimator(address):
         "method": "dataLayers"
     }
 
-def extract_building_measurements(building_data):
-    """
-    Extract measurements from buildingInsights response.
-    """
-    try:
-        # Extract roof segments from building insights
-        roof_segments = building_data.get("roofSegmentStats", [])
-        
-        total_area_m2 = 0
-        total_perimeter_m = 0
-        
-        for segment in roof_segments:
-            # Convert square feet to square meters (1 sq ft = 0.092903 sq m)
-            area_sqft = segment.get("groundAreaMeters2", 0)
-            total_area_m2 += area_sqft
-            
-            # Calculate perimeter from area (approximation for rectangular segments)
-            # Assuming roughly square segments, perimeter ≈ 4 * sqrt(area)
-            if area_sqft > 0:
-                perimeter_m = 4 * (area_sqft ** 0.5)
-                total_perimeter_m += perimeter_m
-        
-        # Calculate cost estimation
-        cost_per_meter = 20
-        estimated_cost = total_perimeter_m * cost_per_meter
-        
-        return {
-            "summary": {
-                "total_roof_area_m2": round(total_area_m2, 2),
-                "total_gutter_length_m": round(total_perimeter_m, 2),
-                "estimated_cost_usd": round(estimated_cost, 2),
-                "cost_per_meter_usd": cost_per_meter
-            },
-            "technical_details": {
-                "num_roof_segments": len(roof_segments),
-                "method": "buildingInsights"
-            },
-            "roof_segments": roof_segments
-        }
-        
-    except Exception as e:
-        return {"error": f"Failed to extract building measurements: {str(e)}"}
-        
