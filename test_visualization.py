@@ -4,7 +4,7 @@ def test_visualization():
     """Test the visualization functionality with a sample address"""
     
     # Use the address from the attached JSON file
-    address = "766 E Creekwood Ln, Murray, UT 84107, USA"
+    address = "4 Pattie Pl Wappingers Falls, NY 12590"
     # address = "190 A Brynat lane, new bedford, MA, USA"
     print(f"Testing visualization for address: {address}")
     print("=" * 60)
@@ -27,7 +27,7 @@ def test_visualization():
         print(f"Total Roof Area: {summary['total_roof_area_m2']} m²")
         print(f"Total Gutter Length: {summary['total_gutter_length_m']} m")
         print(f"Estimated Cost: ${summary['estimated_cost_usd']}")
-        print(f"Cost per Meter: ${summary['cost_per_meter_usd']}")
+        print(f"Cost per Foot: ${summary['cost_per_foot_usd']}")
     
     if "technical_details" in gutter_estimate:
         tech = gutter_estimate["technical_details"]
@@ -49,8 +49,8 @@ def test_visualization():
         print(f"\nCONTOUR DETAILS ({len(contours)} contours):")
         for i, contour in enumerate(contours[:5]):  # Show first 5
             print(f"   Contour {contour['contour_index']}: "
-                  f"{contour['area_meters_sq']:.1f} m², "
-                  f"{contour['perimeter_meters']:.1f} m perimeter")
+                  f"{contour['area_m2']:.1f} m², "
+                  f"{contour['perimeter_m']:.1f} m perimeter")
         if len(contours) > 5:
             print(f"   ... and {len(contours) - 5} more contours")
 
