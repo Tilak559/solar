@@ -177,7 +177,7 @@ def find_building_in_geojson(geojson_file, lat, lng):
         # Stream through the GeoJSON file to find matching buildings
         with open(geojson_file, 'r') as f:
             # Skip the opening of the FeatureCollection
-            line = f.readline()
+            line = f.readline( )
             if not line.strip().startswith('{"type":"FeatureCollection"'):
                 print("Invalid GeoJSON format")
                 return None
