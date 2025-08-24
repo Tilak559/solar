@@ -8,3 +8,6 @@ shapely>=2.0.0
 matplotlib>=3.7.0
 flask>=2.3.0
 flask-cors>=4.0.0
+fastapi>=0.100.0
+uvicorn>=0.20.0
+pyproj>=3.0.0
